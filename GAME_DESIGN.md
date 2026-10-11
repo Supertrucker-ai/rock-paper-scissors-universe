@@ -1,6 +1,6 @@
 # Rock Paper Scissors Universe: Design Document
 
-**Status:** Draft v0.1 | **Platform:** Mobile web (installable PWA) | **Hosting:** GitHub Pages (static, no server)
+**Status:** M1 built (v0.3) | **Platform:** Mobile web (installable PWA) | **Hosting:** GitHub Pages (static, no server)
 
 ## 1. Pitch
 
@@ -35,42 +35,38 @@ Decision: **hand-curated matchups**, resolved with a simple lookup. No AI at run
 - Each object lists the objects it beats, each with a short reason.
 - Resolution: if A lists B, A wins; if B lists A, B wins; otherwise Standoff.
 - **Validator rule:** no two objects may beat each other (no contradictions).
-- **Coverage target:** each object beats about 8-12 others and loses to about 8-12 others, which gives roughly 85%+ of random pairs a decisive result, so Standoffs stay rare.
-- **No god objects:** nothing may beat more than ~15% of the roster. Objects like "Black Hole" or "Nuke" are either excluded or given clear weaknesses.
+- **Coverage:** not every pair needs a verdict. In vs. CPU and Endless Streak the dealer only deals cycles, so every pair in a hand is always decisive. Only Settle It can land on an undefined pair, and it shows "No clear winner". M1 has about 30% of pairs defined; this should grow with the roster.
+- **No god objects:** nothing may beat more than 8 objects, and every object must lose to at least one other (both enforced by the validator). Objects like "Black Hole" or "Nuke" are either excluded or given clear weaknesses.
 - **Objectivity rule of thumb:** a win must be true in the physical or common-sense world (Fire burns Paper, Scissors cut Paper, Magnet picks up Paperclip). Avoid pop-culture or opinion-based wins.
 
 ### Data format (`data/objects.json`)
 
+A flat list of objects plus a flat list of matchups. Each matchup is `[winner, loser, reason]`, so a contradiction (both directions) is easy to spot.
+
 ```json
 {
-  "id": "water",
-  "name": "Water",
-  "emoji": "💧",
-  "category": "nature",
-  "beats": [
-    { "id": "fire", "why": "Water puts out Fire" },
-    { "id": "iron", "why": "Water rusts Iron" }
+  "objects": [
+    { "id": "water", "name": "Water", "emoji": "💧", "category": "nature" }
+  ],
+  "matchups": [
+    ["water", "fire", "Water puts out Fire"],
+    ["water", "rock", "Water wears down Rock"]
   ]
 }
 ```
 
-### Starter sample (illustrative)
+### M1 roster (as shipped)
 
-| Object | Beats (why) |
-|---|---|
-| 🪨 Rock | ✂️ Scissors (dulls them), 🥚 Egg (smashes it) |
-| 📄 Paper | 🪨 Rock (wraps it), 💧 Water (soaks it up) |
-| ✂️ Scissors | 📄 Paper (cuts it), 🌿 Plant (snips it) |
-| 🔥 Fire | 📄 Paper (burns it), 🌿 Plant (burns it) |
-| 💧 Water | 🔥 Fire (puts it out), 🪨 Rock (wears it down over time) |
-| 🧲 Magnet | 📎 Paperclip (pulls it), ✂️ Scissors (sticks to them) |
+27 objects, 106 matchups, 38 dealable hands (triangles). Categories: nature, tools, household, animals, transport.
+
+Lightning and Sun were cut from M1. Nothing in the roster beats Lightning, and Sun forms no cycle with the other objects, so neither could ever be dealt. They return when fitting counters exist (a lightning rod, clouds).
 
 ## 5. Object Roster
 
-- **v1 target:** ~150 objects. **Stretch:** 250.
+- **M1 shipped:** 27 objects. **v1 target:** ~150. **Stretch:** 250.
 - Categories (used for variety when dealing): nature, tools, food, animals, household, tech, toys, weather.
 - **Dealing rule (important, because the hand is shared):** the dealer only draws "triangle" hands, where the 3 objects form a true cycle (A beats B, B beats C, C beats A), like rock-paper-scissors itself. This guarantees there is no obviously best pick, so the mind game works. A transitive hand (A beats B and C) would make everyone pick A, which is boring.
-- The validator pre-computes every valid triangle from the matchup data and stores the list. The dealer picks a random triangle, so no runtime searching is needed.
+- The game derives every valid triangle from the matchup data when it loads (instant at this size), and the validator reports the count. The dealer picks a random triangle and never repeats the previous hand.
 - **Roster implication:** the matchup web must contain plenty of cycles, since the dealer needs them. The validator reports triangle count and flags objects that appear in none.
 - Variety: avoid dealing the same triangle twice in a row, and prefer triangles with 3 different categories.
 - **Inclusion rules:** appropriate for all ages, recognizable as a single emoji, and has at least 6 wins and 6 losses defined.
@@ -103,7 +99,7 @@ Decision: **hand-curated matchups**, resolved with a simple lookup. No AI at run
 ## 8. Technical Approach
 
 - **Stack:** plain HTML, CSS, and vanilla JS (no framework, no build step).
-- **Files:** `index.html`, `style.css`, `game.js`, `data/objects.json`, `manifest.json`, `sw.js` (service worker for offline), `tools/validate.js`.
+- **Files:** `index.html`, `style.css`, `game.js` (UI), `logic.js` (rules, no DOM), `data/objects.json`, `manifest.json`, `sw.js` (service worker for offline), `icons/`, `tools/validate.js`, `tools/test.js`.
 - **PWA:** installable via "Add to Home Screen" on iOS and Android, so it behaves like an app with its own icon.
 - **Storage:** `localStorage` for best streak and collection progress (wrapped in try/catch).
 - **Size budget:** under 1 MB total.
@@ -112,7 +108,7 @@ Decision: **hand-curated matchups**, resolved with a simple lookup. No AI at run
 ## 9. Delivery: GitHub
 
 - Repo hosts the source and design doc.
-- **GitHub Pages** serves the game at a public URL, which can be texted to the phone. Open it, tap Share, then "Add to Home Screen."
+- **GitHub Pages** serves the game at https://supertrucker-ai.github.io/rock-paper-scissors-universe/ which can be texted to the phone. Open it, tap Share, then "Add to Home Screen."
 - Note: Pages sites are public by default. The game contains nothing personal.
 
 ## 10. Roadmap
@@ -120,8 +116,8 @@ Decision: **hand-curated matchups**, resolved with a simple lookup. No AI at run
 | Milestone | Scope |
 |---|---|
 | **M0** | Design doc (this) |
-| **M1** | Playable vs. CPU, ~40 objects, core loop, result reasons |
-| **M2** | Roster to ~150 and validator tool, Endless Streak, PWA/offline |
+| **M1** ✅ | Playable vs. CPU, Endless Streak and Settle It, 27 objects, result reasons, offline PWA, validator and tests |
+| **M2** | Roster to ~150 (food, tech, toys, more animals), bring back Lightning and Sun with fitting counters |
 | **M3** | Pass-and-play, sound/haptics polish, collection book |
 | **M4** | Stretch roster, difficulty setting, achievements |
 

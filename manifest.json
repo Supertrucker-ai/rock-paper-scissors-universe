@@ -1,0 +1,16 @@
+{
+  "name": "Rock Paper Scissors Universe",
+  "short_name": "RPS Universe",
+  "description": "Rock paper scissors with every object in the universe. Which one would win?",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b1446",
+  "theme_color": "#1b1446",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
